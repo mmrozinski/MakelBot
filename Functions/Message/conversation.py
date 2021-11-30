@@ -16,6 +16,7 @@ class conversation(commands.Cog):
         
     qna_context_buffer = ""
     joke_context_buffer = ""
+    order_context_buffer = ""
 
     @commands.command()
     async def qna(self, ctx, *args):
@@ -34,7 +35,7 @@ class conversation(commands.Cog):
             stop=["\n"]
         )
         self.qna_context_buffer += ("Q: " + question + "\nA: " + answer.choices[0].text + "\n")
-        
+
         if len(self.qna_context_buffer.split("\n")) > 8:
             self.qna_context_buffer = "\n".join(self.qna_context_buffer.split("\n")[2:])
         await ctx.channel.send(answer.choices[0].text)
@@ -47,7 +48,7 @@ class conversation(commands.Cog):
             question += arg
         answer = openai.Completion.create(
             engine="curie",
-            prompt=question,
+            prompt=self.order_context_buffer + question,
             temperature=0.3,
             max_tokens=60,
             top_p=0.3,
@@ -55,6 +56,11 @@ class conversation(commands.Cog):
             presence_penalty=0,
             stop=["\n"]
             )
+        await ctx.channel.send(answer.choices[0].text)
+        self.order_context_buffer += ("Q: " + question + "\nA: " + answer.choices[0].text + "\n")
+
+        if len(self.order_context_buffer.split("\n")) > 8:
+            self.order_context_buffer = "\n".join(self.order_context_buffer.split("\n")[2:])
         await ctx.channel.send(answer.choices[0].text)
 
     @commands.command()
