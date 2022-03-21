@@ -1,10 +1,34 @@
-import discord
-from discord.ext import commands
+"""
+Responsible for handling sound related commands
+
+Classes:
+    Sound
+
+Functions:
+    setup
+"""
+
 import youtube_dl
+from discord.ext import commands
 
-import settings
 
-class sound(commands.Cog):
+class Sound(commands.Cog):
+    """
+    Contains sound related commands
+
+    Attributes
+    ----------
+    YTDL_OPTIONS : dict
+        YTDL configuration options
+    FFMPEG_OPTIONS : dict
+        FFMPEG configuration options
+    ytdl : youtube_dl.FileDownloader
+        YTDL FileDownloader object
+
+    Methods
+    -------
+
+    """
     YTDL_OPTIONS = {
         'format': 'bestaudio/best',
         'extractaudio': True,
@@ -28,12 +52,15 @@ class sound(commands.Cog):
 
     ytdl = youtube_dl.YoutubeDL(YTDL_OPTIONS)
 
-    
     def __init__(self, bot):
         self.bot = bot
         self._last_member = None
 
-    
 
 def setup(bot):
-    bot.add_cog(sound(bot))
+    """
+    Called during bot's startup.
+
+    :param bot: bot object, passed by Discord's API
+    """
+    bot.add_cog(Sound(bot))
