@@ -1,27 +1,44 @@
+"""
+A simple Discord bot's main file
+
+Functions:
+    on_ready()
+
+Miscellaneous variables:
+    intents
+    cogs
+    client
+"""
+
 import discord
 from discord.ext import commands
 
 import settings
-import Keys.botToken as botToken
+import Local.Keys.botToken as botToken
 
 intents = discord.Intents.default()
 
-cogs: list = ["Functions.Info.info", "Functions.Message.message", "Functions.Misc.misc", "Functions.Users.users", "Functions.Misc.sound", "Functions.Message.conversation", "Functions.Economy.economy"]
+cogs: list = ['Functions.Info.Info', 'Functions.Message.Message', 'Functions.Misc.Misc', 'Functions.Users.Users',
+              'Functions.Misc.Sound', 'Functions.Message.Conversation', 'Functions.Economy.Economy']
 
 client = commands.Bot(command_prefix=settings.Prefix, help_command=None, intents=intents)
 
+
 @client.event
 async def on_ready():
-    print("Bot is ready!")
+    """
+    Function called when bot starts up
+    """
+    print('Bot is ready!')
     await client.change_presence(status=discord.Status.online, activity=discord.Game(settings.BotStatus))
     for cog in cogs:
         try:
-            print(f"Loading cog {cog}")
+            print(f'Loading cog {cog}')
             client.load_extension(cog)
-            print(f"Loaded cog {cog}")
+            print(f'Loaded cog {cog}')
         except Exception as e:
-            exc = "{}: {}".format(type(e).__name__, e)
-            print("Failed to load cog {}\n{}".format(cog, exc))
+            exc = '{}: {}'.format(type(e).__name__, e)
+            print('Failed to load cog {}\n{}'.format(cog, exc))
 
 
 client.run(botToken.TOKEN)
