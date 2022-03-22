@@ -9,6 +9,9 @@ from async_timeout import timeout
 from discord.ext import commands
 
 
+class VoiceError(Exception):
+    pass
+
 class Song:
     """Represents a single YTDL song"""
     __slots__ = ('source', 'requester')
@@ -67,6 +70,7 @@ class VoiceState:
 
         self.song_queue = SongQueue()
         self.current = None
+        self.next = asyncio.Event()
 
         self.exists = True
 
@@ -76,8 +80,13 @@ class VoiceState:
     def __del__(self):
         self.audio_player.cancel()
 
+    @property
+    def is_playing(self):
+        return self.voice and self.current
+
     async def audio_player_task(self):
         while True:
+            self.next.clear()
             self.current = None
 
             try:
@@ -87,8 +96,12 @@ class VoiceState:
                 self.bot.loop.create_task(self.stop())
                 self.exists = False
                 return
+            else:
+                self.current.source.volume = self.volume
+                self.voice.play(self.current.source, after=self.play_next_song)
+                await self.current.source.channel.send(embed=self.current.create_embed())
 
-            self.voice.play(self.current.source)
+            await self.next.wait()
 
     async def stop(self):
         self.song_queue.clear()
@@ -96,3 +109,9 @@ class VoiceState:
         if self.voice:
             await self.voice.disconnect()
             self.voice = None
+
+    def play_next_song(self, error=None):
+        if error:
+            raise VoiceError(str(error))
+
+        self.next.set()

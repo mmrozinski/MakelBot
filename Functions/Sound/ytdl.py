@@ -125,14 +125,13 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         for e in info['entries']:
             entries.append(e)
-            print(e)
 
         info['entries'] = entries
 
         for e in info['entries']:
             VId = e.get('id')
             VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
-            lst.append(f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})\n')
+            lst.append(f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})          {e["duration"]}\n')
 
         cls.search["description"] = "\n".join(lst)
 
