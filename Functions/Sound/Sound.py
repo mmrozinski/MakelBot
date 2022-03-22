@@ -8,7 +8,7 @@ Functions:
     setup
 """
 
-import ytdl
+import Functions.Sound.ytdl as ytdl
 from discord.ext import commands
 
 from Functions.Sound import Voice
@@ -43,6 +43,10 @@ class Sound(commands.Cog):
 
         return state
 
+    async def cog_before_invoke(self, ctx: commands.Context):
+        # Set voice state for every command
+        ctx.voice_state = self.get_voice_state(ctx)
+
     @commands.command(name='join')
     async def _join(self, ctx: commands.Context):
         """Joins a voice channel."""
@@ -64,7 +68,7 @@ class Sound(commands.Cog):
 
         async with ctx.typing():
             try:
-                source = await ytdl.YTDLSource.create_source(ctx, search, loop=self.bot.loop)
+                source = await ytdl.YTDLSource.search_source(self.bot, ctx, search, loop=self.bot.loop)
             except ytdl.YTDLError as e:
                 await ctx.send('An error occurred while processing this request: {}'.format(str(e)))
             else:
@@ -72,8 +76,8 @@ class Sound(commands.Cog):
                     await ctx.invoke(self._join)
 
                 song = Voice.Song(source)
-                await ctx.voice_state.songs.put(song)
-                await ctx.send('Enqueued {}'.format(str(source)))
+                await ctx.voice_state.song_queue.put(song)
+                await ctx.send('Added {} to queue'.format(str(source)))
 
 
 def setup(bot):

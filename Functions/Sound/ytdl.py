@@ -108,10 +108,9 @@ class YTDLSource(discord.PCMVolumeTransformer):
         channel = ctx.channel
         loop = loop or asyncio.get_event_loop()
 
-        cls.search_query = '%s%s:%s' % ('ytsearch', 10, ''.join(search))
+        cls.search_query = '%s%s:%s' % ('ytsearch', 5, ''.join(search))
 
-        partial = functools.partial(cls.ytdl.extract_info, cls.search_query, download=False, process=False)
-        info = await loop.run_in_executor(None, partial)
+        info = cls.ytdl.extract_info(cls.search_query, download=False, process=False)
 
         cls.search = {}
         cls.search["title"] = f'Search results for:\n**{search}**'
@@ -122,29 +121,41 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         lst = []
 
+        entries = []
+
+        for e in info['entries']:
+            entries.append(e)
+            print(e)
+
+        info['entries'] = entries
+
         for e in info['entries']:
             VId = e.get('id')
             VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
             lst.append(f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})\n')
 
-        lst.append('\n**Type a number to make a choice, Type `cancel` to exit**')
         cls.search["description"] = "\n".join(lst)
 
         em = discord.Embed.from_dict(cls.search)
-        await ctx.send(embed=em, delete_after=45.0)
+        sent = await ctx.send(embed=em, delete_after=45.0)
 
-        def check(msg):
-            return msg.content.isdigit() == True and msg.channel == channel or msg.content == 'cancel' or msg.content == 'Cancel'
+        reactions = ['🚫', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']
+
+        for reaction in reactions:
+            await sent.add_reaction(reaction)
+
+        def check(reaction, user):
+            return str(reaction) in reactions and user == ctx.author
 
         try:
-            m = await bot.wait_for('message', check=check, timeout=45.0)
+            m, _ = await bot.wait_for('reaction_add', check=check, timeout=30.0)
 
         except asyncio.TimeoutError:
             rtrn = 'timeout'
 
         else:
-            if m.content.isdigit() == True:
-                sel = int(m.content)
+            if reactions.index(str(m)) > 0:
+                sel = int(reactions.index(str(m)))
                 if 0 < sel <= 10:
                     for key, value in info.items():
                         if key == 'entries':
@@ -156,7 +167,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
                     rtrn = cls(ctx, discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data)
                 else:
                     rtrn = 'sel_invalid'
-            elif m.content == 'cancel':
+            elif reactions.index(str(m)) == 0:
+                sent.delete()
                 rtrn = 'cancel'
             else:
                 rtrn = 'sel_invalid'

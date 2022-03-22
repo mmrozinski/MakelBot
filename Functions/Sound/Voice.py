@@ -4,7 +4,7 @@ import itertools
 import random
 
 import discord
-import ytdl
+import Functions.Sound.ytdl as ytdl
 from async_timeout import timeout
 from discord.ext import commands
 
@@ -91,7 +91,7 @@ class VoiceState:
             self.voice.play(self.current.source)
 
     async def stop(self):
-        self.songs.clear()
+        self.song_queue.clear()
 
         if self.voice:
             await self.voice.disconnect()
