@@ -19,7 +19,7 @@ import Local.Keys.botToken as botToken
 intents = discord.Intents.default()
 
 cogs: list = ['Functions.Info.Info', 'Functions.Message.Message', 'Functions.Misc.Misc', 'Functions.Users.Users',
-              'Functions.Misc.Sound', 'Functions.Message.Conversation', 'Functions.Economy.Economy']
+              'Functions.Sound.Sound', 'Functions.Message.Conversation', 'Functions.Economy.Economy']
 
 client = commands.Bot(command_prefix=settings.Prefix, help_command=None, intents=intents)
 
