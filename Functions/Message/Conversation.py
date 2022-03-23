@@ -19,12 +19,6 @@ openai.api_key = openaiKey.KEY
 class Conversation(commands.Cog):
     """
     Contains OpenAI conversation related commands
-
-    Methods
-    -------
-        qna(self, ctx, *args)
-        order(self, ctx, *args)
-        joke(self, ctx, *args)
     """
     def __init__(self, bot):
         self.bot = bot
@@ -107,9 +101,4 @@ class Conversation(commands.Cog):
 
 
 def setup(bot):
-    """
-    Called during bot's startup
-
-    :param bot: bot object, passed by Discord's API
-    """
     bot.add_cog(Conversation(bot))

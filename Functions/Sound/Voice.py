@@ -1,7 +1,8 @@
 import asyncio
-import collections
 import itertools
 import random
+
+from copy import deepcopy
 
 import discord
 import Functions.Sound.ytdl as ytdl
@@ -23,21 +24,18 @@ class Song:
     def create_embed(self):
         """Makes a **sick** embed for the song"""
         embed = (discord.Embed(title='Now playing', description='```css\n{0.source.title}\n```'.format(self),
-                               color=discord.Color.blurple())
-                 .add_field(name='Duration', value=self.source.duration)
-                 .add_field(name='Requested by', value=self.requester.mention)
-                 .add_field(name='Uploader', value='[{0.source.uploader}]({0.source.uploader_url})'.format(self))
-                 .add_field(name='URL', value='[Click]({0.source.url})'.format(self))
-                 .set_thumbnail(url=self.source.thumbnail)
-                 .set_author(name=self.requester.name, icon_url=self.requester.avatar_url))
+                               color=discord.Color.purple())
+                        .add_field(name='Duration', value=self.source.duration)
+                        .add_field(name='Requested by', value=self.requester.mention)
+                        .add_field(name='Uploader', value='[{0.source.uploader}]({0.source.uploader_url})'.format(self))
+                        .add_field(name='URL', value='[Click]({0.source.url})'.format(self))
+                        .set_thumbnail(url=self.source.thumbnail)
+                        .set_author(name=self.requester.name, icon_url=self.requester.avatar_url))
         return embed
 
 
 class SongQueue(asyncio.Queue):
     """Song queue, based on asyncio's Queue"""
-    def _init(self, maxsize):
-        self._queue = collections.deque()
-
     def __getitem__(self, item):
         if isinstance(item, slice):
             return list(itertools.islice(self._queue, item.start, item.stop, item.step))
@@ -72,13 +70,24 @@ class VoiceState:
         self.current = None
         self.next = asyncio.Event()
 
-        self.exists = True
+        self.current_message = None
 
-        self.volume = .5
+        self.exists = True
+        self.loop = False
+
+        self.volume = 1.
         self.audio_player = bot.loop.create_task(self.audio_player_task())
 
     def __del__(self):
         self.audio_player.cancel()
+
+    @property
+    def loop(self):
+        return self._loop
+
+    @loop.setter
+    def loop(self, value: bool):
+        self._loop = value
 
     @property
     def is_playing(self):
@@ -87,7 +96,13 @@ class VoiceState:
     async def audio_player_task(self):
         while True:
             self.next.clear()
-            self.current = None
+            self.now = None
+
+            if self.loop and self.current:
+                await self.song_queue.put(Song(self.current.source))
+
+            if self.current_message:
+                await self.current_message.delete()
 
             try:
                 async with timeout(180):  # 3 minutes
@@ -96,12 +111,25 @@ class VoiceState:
                 self.bot.loop.create_task(self.stop())
                 self.exists = False
                 return
-            else:
-                self.current.source.volume = self.volume
-                self.voice.play(self.current.source, after=self.play_next_song)
-                await self.current.source.channel.send(embed=self.current.create_embed())
+
+            self.current.source.volume = self.volume
+            self.voice.play(self.current.source, after=self.play_next_song)
+            self.current_message = await self.current.source.channel.send(embed=self.current.create_embed())
 
             await self.next.wait()
+
+    def play_next_song(self, error=None):
+        if error:
+            raise VoiceError(str(error))
+
+        self.next.set()
+
+    def skip(self):
+        skipped = self.current
+        if self.is_playing:
+            self.voice.stop()
+
+        return skipped
 
     async def stop(self):
         self.song_queue.clear()
@@ -109,9 +137,14 @@ class VoiceState:
         if self.voice:
             await self.voice.disconnect()
             self.voice = None
+            await self.current_message.delete()
 
     def play_next_song(self, error=None):
         if error:
             raise VoiceError(str(error))
 
         self.next.set()
+
+    @loop.setter
+    def loop(self, value):
+        self._loop = value

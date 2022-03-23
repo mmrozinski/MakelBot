@@ -17,19 +17,6 @@ from Functions.Sound import Voice
 class Sound(commands.Cog):
     """
     Contains sound related commands
-
-    Attributes
-    ----------
-    YTDL_OPTIONS : dict
-        YTDL configuration options
-    FFMPEG_OPTIONS : dict
-        FFMPEG configuration options
-    ytdl : youtube_dl.FileDownloader
-        YTDL FileDownloader object
-
-    Methods
-    -------
-
     """
     def __init__(self, bot):
         self.bot = bot
@@ -60,30 +47,48 @@ class Sound(commands.Cog):
 
     @commands.command(name='play')
     async def _play(self, ctx: commands.Context, *, search: str):
-        """
-        Plays a song.
-        If there are songs in the queue, this will be queued until the
-        other songs finished playing.
-        """
-
+        """Adds a song to the queue."""
         async with ctx.typing():
             try:
-                source = await ytdl.YTDLSource.search_source(self.bot, ctx, search, loop=self.bot.loop)
+                if search.startswith('https://'):
+                    source = await ytdl.YTDLSource.create_source(ctx, search, loop=self.bot.loop)
+                else:
+                    source = await ytdl.YTDLSource.search_source(self.bot, ctx, search, loop=self.bot.loop)
             except ytdl.YTDLError as e:
                 await ctx.send('An error occurred while processing this request: {}'.format(str(e)))
             else:
-                if not ctx.voice_state.voice:
-                    await ctx.invoke(self._join)
+                if source == 'cancel' or source == 'timeout':
+                    await ctx.send('Cancelled')
+                else:
+                    if not ctx.voice_state.voice:
+                        await ctx.invoke(self._join)
 
-                song = Voice.Song(source)
-                await ctx.voice_state.song_queue.put(song)
-                await ctx.send('Added {} to queue'.format(str(source)))
+                    song = Voice.Song(source)
+                    await ctx.voice_state.song_queue.put(song)
+                    await ctx.send('Added {} to queue'.format(str(source)))
+
+    @commands.command(name='loop')
+    async def _loop(self, ctx: commands.Context):
+        """Loops or unloops the current queue. (I think)"""
+
+        if not ctx.voice_state.is_playing:
+            return await ctx.send('Nothing being played at the moment.')
+
+        ctx.voice_state.loop = not ctx.voice_state.loop
+        await ctx.send('Looping is now turned ' + ('on' if ctx.voice_state.loop else 'off'))
+
+    @commands.command(name='skip')
+    async def _skip(self, ctx: commands.Context):
+        """Skips the current song."""
+        skipped = ctx.voice_state.skip()
+        await ctx.send('Skipped ' + skipped.source.title)
+
+    @commands.command(name='stop')
+    async def _stop(self, ctx: commands.Context):
+        """Stops the player and leaves the channel."""
+        await ctx.voice_state.stop()
+        await ctx.send('Playback stopped')
 
 
 def setup(bot):
-    """
-    Called during bot's startup.
-
-    :param bot: bot object, passed by Discord's API
-    """
     bot.add_cog(Sound(bot))

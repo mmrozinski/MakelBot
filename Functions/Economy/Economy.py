@@ -14,9 +14,6 @@ from discord.ext import commands
 class Economy(commands.Cog):
     """
     Contains economy related commands
-
-    Methods
-    -------
     """
     def __init__(self, bot):
         self.bot = bot
@@ -24,9 +21,4 @@ class Economy(commands.Cog):
 
 
 def setup(bot):
-    """
-    Called during bot's startup
-
-    :param bot: bot object, passed by Discord's API
-    """
     bot.add_cog(Economy(bot))

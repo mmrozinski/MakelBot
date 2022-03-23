@@ -115,7 +115,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
         cls.search = {}
         cls.search["title"] = f'Search results for:\n**{search}**'
         cls.search["type"] = 'rich'
-        cls.search["color"] = 7506394
+        cls.search["color"] = int(0x9b59b6)
         cls.search["author"] = {'name': f'{ctx.author.name}', 'url': f'{ctx.author.avatar_url}',
                                 'icon_url': f'{ctx.author.avatar_url}'}
 
@@ -136,7 +136,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
         cls.search["description"] = "\n".join(lst)
 
         em = discord.Embed.from_dict(cls.search)
-        sent = await ctx.send(embed=em, delete_after=45.0)
+        sent = await ctx.send(embed=em, delete_after=30.0)
 
         reactions = ['🚫', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']
 
@@ -164,13 +164,13 @@ class YTDLSource(discord.PCMVolumeTransformer):
                             partial = functools.partial(cls.ytdl.extract_info, VUrl, download=False)
                             data = await loop.run_in_executor(None, partial)
                     rtrn = cls(ctx, discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data)
+                    await sent.delete()
                 else:
+                    await sent.delete()
                     rtrn = 'sel_invalid'
-            elif reactions.index(str(m)) == 0:
-                sent.delete()
-                rtrn = 'cancel'
             else:
-                rtrn = 'sel_invalid'
+                await sent.delete()
+                rtrn = 'cancel'
 
         return rtrn
 

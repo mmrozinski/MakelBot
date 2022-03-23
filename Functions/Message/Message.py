@@ -14,10 +14,6 @@ from discord.ext import commands
 class Message(commands.Cog):
     """
     Contains message management related commands
-
-    Methods
-    -------
-        clear(ctx, arg)
     """
     def __init__(self, bot):
         self.bot = bot
@@ -25,12 +21,7 @@ class Message(commands.Cog):
 
     @commands.command()
     async def clear(self, ctx, arg):
-        """
-        Removes last x messages from author's channel.
-
-        :param ctx: context object
-        :param arg: args
-        """
+        """Removes last x messages from author's channel."""
         lst_msg = await ctx.channel.history(limit=int(arg)).flatten()
         await ctx.channel.delete_messages(lst_msg)
 
@@ -39,9 +30,4 @@ class Message(commands.Cog):
 
 
 def setup(bot):
-    """
-    Called during bot's startup.
-
-    :param bot: bot object, passed by Discord's API
-    """
     bot.add_cog(Message(bot))

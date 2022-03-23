@@ -16,10 +16,6 @@ from discord.ext import commands
 class Misc(commands.Cog):
     """
     Contains miscellaneous commands.
-
-    Methods
-    -------
-        roll(ctx, *args)
     """
     def __init__(self, bot):
         self.bot = bot
@@ -27,12 +23,7 @@ class Misc(commands.Cog):
 
     @commands.command()
     async def roll(self, ctx, *args):
-        """
-        Sends a message with a random number from 1 to x.
-
-        :param ctx: context object
-        :param args: command arguments (x)
-        """
+        """Sends a message with a random number from 1 to x."""
         if not args:
             await ctx.channel.send(str(random.randint(1, 6)))
         else:
@@ -40,9 +31,4 @@ class Misc(commands.Cog):
 
 
 def setup(bot):
-    """
-        Called during bot's startup
-
-        :param bot: bot object, passed by Discord's API
-    """
     bot.add_cog(Misc(bot))
