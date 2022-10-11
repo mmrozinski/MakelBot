@@ -90,5 +90,5 @@ class Sound(commands.Cog):
         await ctx.send('Playback stopped')
 
 
-def setup(bot):
-    bot.add_cog(Sound(bot))
+async def setup(bot):
+    await bot.add_cog(Sound(bot))

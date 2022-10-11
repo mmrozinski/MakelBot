@@ -20,5 +20,5 @@ class Economy(commands.Cog):
         self._last_member = None
 
 
-def setup(bot):
-    bot.add_cog(Economy(bot))
+async def setup(bot):
+    await bot.add_cog(Economy(bot))

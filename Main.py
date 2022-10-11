@@ -16,7 +16,7 @@ from discord.ext import commands
 import settings
 import Local.Keys.botToken as botToken
 
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 
 cogs: list = ['Functions.Info.Info', 'Functions.Message.Message', 'Functions.Misc.Misc', 'Functions.Users.Users',
               'Functions.Sound.Sound', 'Functions.Message.Conversation', 'Functions.Economy.Economy']
@@ -34,7 +34,7 @@ async def on_ready():
     for cog in cogs:
         try:
             print(f'Loading cog {cog}')
-            client.load_extension(cog)
+            await client.load_extension(cog)
             print(f'Loaded cog {cog}')
         except Exception as e:
             exc = '{}: {}'.format(type(e).__name__, e)

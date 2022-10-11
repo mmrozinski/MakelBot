@@ -26,5 +26,5 @@ class Users(commands.Cog):
         user.save()
 
 
-def setup(bot):
-    bot.add_cog(Users(bot))
+async def setup(bot):
+    await bot.add_cog(Users(bot))

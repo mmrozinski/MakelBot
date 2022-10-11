@@ -30,5 +30,5 @@ class Misc(commands.Cog):
             await ctx.channel.send(str(random.randint(1, int(args[0]))))
 
 
-def setup(bot):
-    bot.add_cog(Misc(bot))
+async def setup(bot):
+    await bot.add_cog(Misc(bot))
