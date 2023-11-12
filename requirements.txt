@@ -1,3 +1,4 @@
 py-cord[voice]
 youtube_dl
 requests
+SpeechRecognition
