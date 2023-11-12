@@ -38,10 +38,10 @@ class Message(commands.Cog):
         await ctx.channel.send(msg)
 
 
-def setup(bot):
+async def setup(bot):
     """
     Called during bot's startup.
 
     :param bot: bot object, passed by Discord's API
     """
-    bot.add_cog(Message(bot))
+    await bot.add_cog(Message(bot))

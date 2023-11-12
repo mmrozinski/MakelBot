@@ -55,7 +55,6 @@ class Info(commands.Cog):
         """
         await ctx.send(ctx.author.avatar_url)
 
-
     @commands.command()
     async def help(self, ctx):
         """
@@ -74,10 +73,10 @@ class Info(commands.Cog):
         await ctx.send(embed=info_board)
 
 
-def setup(bot):
+async def setup(bot):
     """
     Called during bot's startup
 
     :param bot: bot object, passed by Discord's API
     """
-    bot.add_cog(Info(bot))
+    await bot.add_cog(Info(bot))

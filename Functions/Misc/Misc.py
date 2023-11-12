@@ -38,11 +38,17 @@ class Misc(commands.Cog):
         else:
             await ctx.channel.send(str(random.randint(1, int(args[0]))))
 
+    @commands.command()
+    @commands.is_owner()
+    async def sync(self, ctx):
+        await ctx.bot.tree.sync()
+        await ctx.send("Synced!")
 
-def setup(bot):
+
+async def setup(bot):
     """
         Called during bot's startup
 
         :param bot: bot object, passed by Discord's API
     """
-    bot.add_cog(Misc(bot))
+    await bot.add_cog(Misc(bot))

@@ -2,21 +2,18 @@ class User:
     id = None
     balance = None
 
-    def __init__(self, id):
-        self.id = id
-
-    def __init__(self, id, balance):
+    def __init__(self, id, balance=None):
         self.id = id
         self.balance = balance
 
-    def save():
+    def save(self):
         return
 
-    def isPresent():
+    def isPresent(self):
         return
 
-    def _create():
+    def _create(self):
         return
     # Saves the user into the user DB (creates or updates)
-    def _update():
+    def _update(self):
         return

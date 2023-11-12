@@ -57,10 +57,10 @@ class Sound(commands.Cog):
         self._last_member = None
 
 
-def setup(bot):
+async def setup(bot):
     """
     Called during bot's startup.
 
     :param bot: bot object, passed by Discord's API
     """
-    bot.add_cog(Sound(bot))
+    await bot.add_cog(Sound(bot))

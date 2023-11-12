@@ -37,10 +37,10 @@ class Users(commands.Cog):
         user.save()
 
 
-def setup(bot):
+async def setup(bot):
     """
         Called during bot's startup
 
         :param bot: bot object, passed by Discord's API
     """
-    bot.add_cog(Users(bot))
+    await bot.add_cog(Users(bot))
