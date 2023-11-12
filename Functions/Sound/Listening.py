@@ -10,7 +10,7 @@ Functions:
 import discord
 from discord.ext import commands
 import speech_recognition as sr
-from os import path
+import os
 
 
 async def once_done(sink: discord.sinks.Sink, channel: discord.TextChannel,
@@ -39,21 +39,23 @@ async def once_done_with_stt(sink: discord.sinks.Sink, channel: discord.TextChan
 
     r = sr.Recognizer()
     file: discord.File
+
     for file in files:
         with open("tmp_audio_file.wav", "wb") as tmp_file:
             tmp_file.write(file.fp.read())
 
-        AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "test.wav")
-        with sr.AudioFile(AUDIO_FILE) as source:
+        os.remove("tmp_audio_file2.wav")
+        os.system(".\\ffmpeg\\ffmpeg.exe -i .\\tmp_audio_file.wav .\\tmp_audio_file_fixed.wav")
+
+        with sr.AudioFile("tmp_audio_file2.wav") as source:
             audio = r.record(source)
             try:
-                recognized_text = r.recognize_google(audio, show_all=True)
+                recognized_text = r.recognize_google(audio, language="en-IT")
                 await channel.send(f"Audio transcription: \"{recognized_text}\"")
             except sr.UnknownValueError:
                 await channel.send(f"*Unintelligible*")
             except sr.RequestError as e:
                 print("Transcription error; {0}".format(e))
-
 
 class Listening(commands.Cog):
     bot: commands.Bot = None
