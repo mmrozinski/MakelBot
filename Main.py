@@ -19,7 +19,8 @@ import Local.Keys.botToken as botToken
 intents = discord.Intents.all()
 
 cogs: list = ['Functions.Info.Info', 'Functions.Message.Message', 'Functions.Misc.Misc', 'Functions.Users.Users',
-              'Functions.Misc.Sound', 'Functions.Message.Conversation', 'Functions.Economy.Economy']
+              'Functions.Sound.Sound', 'Functions.Message.Conversation', 'Functions.Economy.Economy',
+              'Functions.Sound.Listening']
 
 client = commands.Bot(command_prefix=settings.Prefix, help_command=None, intents=intents)
 
@@ -34,10 +35,11 @@ async def on_ready():
     for cog in cogs:
         try:
             print(f'Loading cog {cog}')
-            await client.load_extension(cog)
+            client.load_extension(cog)
             print(f'Loaded cog {cog}')
         except Exception as e:
             exc = '{}: {}'.format(type(e).__name__, e)
             print('Failed to load cog {}\n{}'.format(cog, exc))
+
 
 client.run(botToken.TOKEN)

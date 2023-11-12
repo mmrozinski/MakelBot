@@ -1,11 +1,11 @@
 """
-Responsible for handling OpenAI conversation related commands
+Responsible for handling chatbot conversation related commands
 
 Classes:
     Conversation
 
 Functions:
-    setup
+
 """
 import discord
 from discord.ext import commands
@@ -106,10 +106,10 @@ class Conversation(commands.Cog):
                     await ctx.invoke(self.bot.get_command("talk"), message.content)
 
 
-async def setup(bot):
+def setup(bot):
     """
     Called during bot's startup
 
     :param bot: bot object, passed by Discord's API
     """
-    await bot.add_cog(Conversation(bot))
+    bot.add_cog(Conversation(bot))
