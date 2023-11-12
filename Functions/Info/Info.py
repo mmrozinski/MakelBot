@@ -73,10 +73,10 @@ class Info(commands.Cog):
         await ctx.send(embed=info_board)
 
 
-async def setup(bot):
+def setup(bot):
     """
     Called during bot's startup
 
     :param bot: bot object, passed by Discord's API
     """
-    await bot.add_cog(Info(bot))
+    bot.add_cog(Info(bot))

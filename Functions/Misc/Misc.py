@@ -45,10 +45,10 @@ class Misc(commands.Cog):
         await ctx.send("Synced!")
 
 
-async def setup(bot):
+def setup(bot):
     """
         Called during bot's startup
 
         :param bot: bot object, passed by Discord's API
     """
-    await bot.add_cog(Misc(bot))
+    bot.add_cog(Misc(bot))
