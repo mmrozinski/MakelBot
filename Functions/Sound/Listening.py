@@ -144,8 +144,11 @@ async def stop_listen_recording(sink: discord.sinks.Sink, ctx: commands.Context,
 
             voice.save("tmp_speech_file.mp3")
 
-            dc_audio = discord.FFmpegPCMAudio(source="tmp_speech_file.mp3",
-                                              executable="C:\\Users\\Makel\\PycharmProjects\\MakelBot\\ffmpeg\\ffmpeg.exe")
+            if os.name == "nt":
+                dc_audio = discord.FFmpegPCMAudio(source="tmp_speech_file.mp3",
+                                                  executable=os.path.dirname(__file__) + "\\..\\..\\ffmpeg\\ffmpeg.exe")
+            else:
+                dc_audio = discord.FFmpegPCMAudio(source="tmp_speech_file.mp3")
 
             vc.play(dc_audio)
 
