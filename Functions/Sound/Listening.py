@@ -81,7 +81,7 @@ async def once_done_with_stt(sink: discord.sinks.Sink, channel: discord.TextChan
         with sr.AudioFile("tmp_audio_file_fixed.wav") as source:
             audio = r.record(source)
             try:
-                recognized_text = r.recognize_sphinx(audio, language="en-US")
+                recognized_text = r.recognize_google(audio, language="en-IT")
                 await channel.send(f"Audio transcription: \"{recognized_text}\"")
             except sr.UnknownValueError:
                 await channel.send(f"*Unintelligible*")
@@ -126,7 +126,7 @@ async def stop_listen_recording(sink: discord.sinks.Sink, ctx: commands.Context,
             with sr.AudioFile("tmp_audio_file_fixed.wav") as source:
                 audio = r.record(source)
                 try:
-                    recognized_text = r.recognize_google(audio, language="en-US")
+                    recognized_text = r.recognize_google(audio, language="en-IT")
                     transcriptions.append((recognized_text, username))
                     print(recognized_text)
                 except sr.UnknownValueError:
