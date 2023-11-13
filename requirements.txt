@@ -3,3 +3,4 @@ youtube_dl
 requests
 SpeechRecognition
 gTTS
+pydub

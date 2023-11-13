@@ -45,10 +45,11 @@ class Conversation(commands.Cog):
             prompt = prompt[1:]
 
             data = {
-                "model": "llama2-uncensored",
+                "model": "llama2:13b-chat",
                 "prompt": prompt,
                 "context": self.context,
-                "stream": False
+                "stream": False,
+                "options": self.options
             }
 
             if self.system is not None:
@@ -65,12 +66,15 @@ class Conversation(commands.Cog):
     async def talk_reset(self, ctx):
         self.context = None
         self.system = None
+        await ctx.channel.send("Successfully reset the conversation context and system prompt!")
+
+    @commands.command()
+    async def talk_forget(self, ctx):
+        self.context = None
         await ctx.channel.send("Successfully reset the conversation context!")
 
     @commands.command()
     async def talk_system(self, ctx, *args):
-        self.context = None
-
         prompt = ""
         for arg in args:
             prompt += " "

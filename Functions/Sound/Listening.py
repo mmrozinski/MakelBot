@@ -14,8 +14,12 @@ from discord.ext import commands, tasks
 import speech_recognition as sr
 import os
 from gtts import gTTS
-
+from pydub import AudioSegment
 from discord.sinks import RawData
+
+
+if os.name == "nt":
+    AudioSegment.converter = os.path.dirname(__file__) + "\\..\\..\\ffmpeg\\ffmpeg.exe"
 
 
 # This most likely is a crime against clean code, but it works
@@ -126,7 +130,7 @@ async def stop_listen_recording(sink: discord.sinks.Sink, ctx: commands.Context,
             with sr.AudioFile("tmp_audio_file_fixed.wav") as source:
                 audio = r.record(source)
                 try:
-                    recognized_text = r.recognize_google(audio, language="en-IT")
+                    recognized_text = r.recognize_google(audio, language="pl-PL")
                     transcriptions.append((recognized_text, username))
                     print(recognized_text)
                 except sr.UnknownValueError:
@@ -140,9 +144,13 @@ async def stop_listen_recording(sink: discord.sinks.Sink, ctx: commands.Context,
             await ctx.invoke(bot.get_command("talk"), prompt)
 
             to_say = (await ctx.channel.history(limit=1).flatten())[0].content
-            voice = gTTS(text=to_say, lang="en-US", slow=False)
+            voice = gTTS(text=to_say, lang="cs", slow=False)
 
             voice.save("tmp_speech_file.mp3")
+
+            # audio = AudioSegment.from_mp3("tmp_speech_file.mp3")
+            # audio.speedup(playback_speed=1.5)
+            # audio.export("tmp_speech_file.mp3", format="mp3")
 
             if os.name == "nt":
                 dc_audio = discord.FFmpegPCMAudio(source="tmp_speech_file.mp3",
@@ -256,7 +264,7 @@ class Listening(commands.Cog):
         else:
             await ctx.message.reply("I am currently not listening here.")
 
-    @tasks.loop(seconds=1)
+    @tasks.loop(seconds=0.5)
     async def listen(self):
         for guild in self.listen_connections_silence.keys():
             vc = self.listen_connections_silence[guild][0]
