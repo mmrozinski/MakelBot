@@ -30,11 +30,12 @@ class Conversation(commands.Cog):
         self.bot = bot
         self._last_member = None
         self.conv_channels = set()
+        self.options = {}
 
     conv_context_buffer = ""
 
     @commands.command()
-    async def talk(self, ctx:  commands.Context, *args):
+    async def talk(self, ctx: commands.Context, *args):
         async with ctx.channel.typing():
             prompt = ""
             for arg in args:
@@ -47,7 +48,7 @@ class Conversation(commands.Cog):
                 "model": "llama2-uncensored",
                 "prompt": prompt,
                 "context": self.context,
-                "stream": False  # TODO: handle the stream of responses (editing the message maybe?)
+                "stream": False
             }
 
             if self.system is not None:
@@ -58,10 +59,6 @@ class Conversation(commands.Cog):
             response_json = response.json()
             self.context = response_json["context"]
 
-            # self.qna_context_buffer += ("Q: " + question + "\nA: " + answer.choices[0].text + "\n")
-            #
-            # if len(self.qna_context_buffer.split("\n")) > 8:
-            #     self.qna_context_buffer = "\n".join(self.qna_context_buffer.split("\n")[2:])
         await ctx.channel.send(response_json["response"])
 
     @commands.command()
@@ -84,6 +81,22 @@ class Conversation(commands.Cog):
         self.system = prompt
 
         await ctx.channel.send("Successfully changed the conversation system prompt!")
+
+    @commands.command()
+    async def talk_set_parameter(self, ctx, *args):
+        if len(args) != 3:
+            await ctx.channel.send("Parameter name, value and type (float, int, string) expected!")
+            return
+
+        val = None
+        if args[2] == "int":
+            self.options[args[0]] = int(args[1])
+        elif args[2] == "float":
+            self.options[args[0]] = float(args[1])
+        elif args[2] == "string":
+            self.options[args[0]] = args[1]
+
+        await ctx.channel.send("Successfully changed the parameter value!")
 
     @commands.command()
     async def talk_toggle_listen_channel(self, ctx: commands.Context):

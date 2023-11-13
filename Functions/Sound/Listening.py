@@ -8,7 +8,6 @@ Functions:
 
 """
 import random
-from io import BytesIO
 
 import discord
 from discord.ext import commands, tasks
@@ -67,19 +66,22 @@ async def once_done_with_stt(sink: discord.sinks.Sink, channel: discord.TextChan
     await channel.send(f"finished recording audio for: {', '.join(recorded_users)}.")
 
     r = sr.Recognizer()
+    r.energy_threshold = 300
     file: discord.File
 
     for file in files:
         with open("tmp_audio_file.wav", "wb") as tmp_file:
             tmp_file.write(file.fp.read())
 
-        os.remove("tmp_audio_file2.wav")
-        os.system(".\\ffmpeg\\ffmpeg.exe -i .\\tmp_audio_file.wav .\\tmp_audio_file_fixed.wav")
+        if os.name == "nt":
+            os.system(".\\ffmpeg\\ffmpeg.exe -y -i .\\tmp_audio_file.wav .\\tmp_audio_file_fixed.wav")
+        elif os.name == "posix":
+            os.system("ffmpeg -y -i ./tmp_audio_file.wav ./tmp_audio_file_fixed.wav")
 
         with sr.AudioFile("tmp_audio_file_fixed.wav") as source:
             audio = r.record(source)
             try:
-                recognized_text = r.recognize_google(audio, language="en-IT")
+                recognized_text = r.recognize_sphinx(audio, language="en-US")
                 await channel.send(f"Audio transcription: \"{recognized_text}\"")
             except sr.UnknownValueError:
                 await channel.send(f"*Unintelligible*")
@@ -94,42 +96,58 @@ async def stop_listen_recording(sink: discord.sinks.Sink, ctx: commands.Context,
         f"<@{user_id}>"
         for user_id, audio in sink.audio_data.items()
     ]
-    files = [discord.File(audio.file, f"{user_id}.{sink.encoding}") for user_id, audio in
-             sink.audio_data.items()]
+    files_users = [(discord.File(audio.file, f"{user_id}.{sink.encoding}"), user_id) for user_id, audio in
+                   sink.audio_data.items()]
 
     r = sr.Recognizer()
+    r.energy_threshold = 300
 
     transcriptions = []
 
     file: discord.File
 
-    for file in files:
-        with open("tmp_audio_file.wav", "wb") as tmp_file:
-            tmp_file.write(file.fp.read())
+    if not vc.is_playing():
+        for file_user in files_users:
+            file = file_user[0]
+            user_id = file_user[1]
 
-        os.system(".\\ffmpeg\\ffmpeg.exe -y -i .\\tmp_audio_file.wav .\\tmp_audio_file_fixed.wav")
+            if user_id == bot.user.id:
+                continue
 
-        with sr.AudioFile("tmp_audio_file_fixed.wav") as source:
-            audio = r.record(source)
-            try:
-                recognized_text = r.recognize_google(audio, language="en-IT")
-                transcriptions.append(recognized_text)
-                print(recognized_text)
-            except sr.UnknownValueError:
-                pass
+            username = bot.get_user(user_id).display_name
+            with open("tmp_audio_file.wav", "wb") as tmp_file:
+                tmp_file.write(file.fp.read())
 
-    if len(transcriptions) > 0:
-        await ctx.invoke(bot.get_command("talk"), random.choice(transcriptions))
+            if os.name == "nt":
+                os.system(".\\ffmpeg\\ffmpeg.exe -y -i .\\tmp_audio_file.wav .\\tmp_audio_file_fixed.wav")
+            elif os.name == "posix":
+                os.system("ffmpeg -y -i ./tmp_audio_file.wav ./tmp_audio_file_fixed.wav")
 
-        to_say = (await ctx.channel.history(limit=1).flatten())[0].content
-        voice = gTTS(text=to_say, lang="en", slow=False)
+            with sr.AudioFile("tmp_audio_file_fixed.wav") as source:
+                audio = r.record(source)
+                try:
+                    recognized_text = r.recognize_google(audio, language="en-US")
+                    transcriptions.append((recognized_text, username))
+                    print(recognized_text)
+                except sr.UnknownValueError:
+                    pass
 
-        voice.save("tmp_speech_file.mp3")
+        if len(transcriptions) > 0:
+            pick = random.choice(transcriptions)
+            speaker = pick[1]
+            prompt = speaker + ": " + pick[0]
+            await ctx.channel.send(prompt)
+            await ctx.invoke(bot.get_command("talk"), prompt)
 
-        dc_audio = discord.FFmpegPCMAudio(source="tmp_speech_file.mp3",
-                                          executable="C:\\Users\\Makel\\PycharmProjects\\MakelBot\\ffmpeg\\ffmpeg.exe")
+            to_say = (await ctx.channel.history(limit=1).flatten())[0].content
+            voice = gTTS(text=to_say, lang="en-US", slow=False)
 
-        vc.play(dc_audio)
+            voice.save("tmp_speech_file.mp3")
+
+            dc_audio = discord.FFmpegPCMAudio(source="tmp_speech_file.mp3",
+                                              executable="C:\\Users\\Makel\\PycharmProjects\\MakelBot\\ffmpeg\\ffmpeg.exe")
+
+            vc.play(dc_audio)
 
     vc.start_recording(
         discord.sinks.WaveSink(),
@@ -159,6 +177,7 @@ class Listening(commands.Cog):
 
         if not voice:
             await ctx.message.reply("You aren't in a voice channel!")
+            return
 
         vc: discord.VoiceClient = await voice.channel.connect()  # Connect to the voice channel the author is in.
         self.connections.update({ctx.guild.id: vc})  # Updating the cache with the guild and channel.
@@ -176,6 +195,7 @@ class Listening(commands.Cog):
 
         if not voice:
             await ctx.message.reply("You aren't in a voice channel!")
+            return
 
         vc: discord.VoiceClient = await voice.channel.connect()  # Connect to the voice channel the author is in.
         self.connections.update({ctx.guild.id: vc})  # Updating the cache with the guild and channel.
@@ -191,7 +211,8 @@ class Listening(commands.Cog):
     async def stop_recording(self, ctx: commands.Context):
         if ctx.guild.id in self.connections:  # Check if the guild is in the cache.
             vc = self.connections[ctx.guild.id]
-            vc.stop_recording()  # Stop recording, and call the callback (once_done).
+            if vc.recording:
+                vc.stop_recording()  # Stop recording, and call the callback (once_done).
             del self.connections[ctx.guild.id]  # Remove the guild from the cache.
             await ctx.message.delete()  # And delete.
         else:
@@ -203,6 +224,7 @@ class Listening(commands.Cog):
 
         if not voice:
             await ctx.message.reply("You aren't in a voice channel!")
+            return
 
         vc: discord.VoiceClient = await voice.channel.connect(timeout=float("inf"))
         self.connections.update({ctx.guild.id: vc})
@@ -216,6 +238,20 @@ class Listening(commands.Cog):
             vc
         )
         await ctx.message.reply("Started listening!")
+
+    @commands.command()
+    async def stop_listening(self, ctx: commands.Context):
+        if ctx.guild.id in self.connections and ctx.guild.id in self.listen_connections_silence:
+            vc: discord.VoiceClient = self.connections[ctx.guild.id]
+            if vc.recording:
+                vc.stop_recording()
+
+            del self.connections[ctx.guild.id]
+            del self.listen_connections_silence[ctx.guild.id]
+
+            await vc.disconnect()
+        else:
+            await ctx.message.reply("I am currently not listening here.")
 
     @tasks.loop(seconds=1)
     async def listen(self):
